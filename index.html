@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>To-do List</title>
- <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
- <style>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+<title>To-do List</title>
+<style>
   body { 
     font-family: sans-serif; 
     display: flex; 
@@ -13,7 +14,6 @@
     transition: background-color 0.3s ease, color 0.3s ease;
   }
   
- 
   .dark-mode {
     background-color: #222;
     color: white;
@@ -25,14 +25,12 @@
     border: 1px solid #555;
   }
   
-  
   .dark-mode button {
     background-color: #444;
     color: white;
     border: 1px solid #555;
   }
 
-  
   .dark-mode li {
     background-color: #333;
     color: white;
@@ -42,15 +40,14 @@
   .dark-mode li:hover {
     background-color: #444;
   }
-  
 
-#todo-list {
-  margin-top: 20px;
-  padding: 0;
-  padding-bottom: 100px; 
-  list-style: none;
-  width: 300px;
-}
+  #todo-list {
+    margin-top: 20px;
+    padding: 0;
+    padding-bottom: 100px; 
+    list-style: none;
+    width: 300px;
+  }
 
   li {
     background: #f4f4f4;
@@ -93,96 +90,85 @@
     background-color: #eee;
   }
 
-
-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  text-align: center;
-  font-size: 14px;
-  color: #666;
-  padding-bottom: 20px;
-  padding-top: 20px;
-  background-color: white;
-  
-  
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.dark-mode footer {
-  background-color: #222; 
-  color: #aaa; 
-}
-
-.footer-links {
-  margin-top: 10px;
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-}
-
-.footer-links a {
-  text-decoration: none;
-  color: #333;
-  padding: 5px 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background-color: #eee;
-  font-size: 12px;
-  
-  
- 
-  transition: all 0.3s ease;
-}
-
-.footer-links a:hover {
-  background-color: #ddd;
-}
-
-
-.dark-mode .footer-links a {
-  background-color: #444;
-  color: white;
-  border-color: #555;
-}
-
-.dark-mode .footer-links a:hover {
-  background-color: #555;
-}
-
-    
-
-
-#mobileThemeBtn {
-  display: none;
-  margin-left: 5px; 
-
-
-@media (max-width: 600px) {
-  
-  #todo-list {
-    width: 90vw; 
-    margin-left: auto;
-    margin-right: auto;
+  footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+    padding-bottom: 20px;
+    padding-top: 20px;
+    background-color: white;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
-  input {
-    width: 50%; 
+  .dark-mode footer {
+    background-color: #222; 
+    color: #aaa; 
+  }
+
+  .footer-links {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .footer-links a {
+    text-decoration: none;
+    color: #333;
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #eee;
+    font-size: 12px;
+    transition: all 0.3s ease;
+  }
+
+  .footer-links a:hover {
+    background-color: #ddd;
+  }
+
+  .dark-mode .footer-links a {
+    background-color: #444;
+    color: white;
+    border-color: #555;
+  }
+
+  .dark-mode .footer-links a:hover {
+    background-color: #555;
   }
 
   #mobileThemeBtn {
-    display: inline-block;
+    display: none;
+    margin-left: 5px;
   }
 
-  p {
-    display: none;
+  @media (max-width: 768px) {
+    #todo-list {
+      width: 90vw;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    input {
+      width: 50%; 
+    }
+
+    #mobileThemeBtn {
+      display: inline-block;
+    }
+
+    p {
+      display: none;
+    }
+    
+    footer {
+      font-size: 12px;
+    }
   }
-  
-  footer {
-    font-size: 12px;
-  }
-}
 </style>
 </head>
 <body>
@@ -191,22 +177,23 @@ footer {
   <input id="taskInput" type="text" placeholder="New Task...">
   <button id="addBtn">Add</button>
   <button id="mobileThemeBtn">🌓</button>
+  
   <ul id="todo-list"></ul>
+ 
 </div>
 
- <footer>
+<footer>
   <p>Created by Matteus Aydin 2026</p>
   <p style="font-size: 12px; opacity: 0.8; margin-top: 5px;">Press 'M' to toggle theme</p>
-
- 
-  
+  </div>
 </footer>
+
 <script>
   const input = document.getElementById("taskInput");
   const btn = document.getElementById("addBtn");
   const list = document.getElementById("todo-list");
+  const mobileBtn = document.getElementById("mobileThemeBtn");
 
- 
   const savedTasks = localStorage.getItem("myTasks");
   if (savedTasks) {
       const parsedTasks = JSON.parse(savedTasks);
@@ -215,7 +202,6 @@ footer {
       });
   }
 
- 
   if (localStorage.getItem("darkMode") === "enabled") {
       document.body.classList.add("dark-mode");
   }
@@ -270,7 +256,6 @@ footer {
   }
 
   document.addEventListener("keydown", function(event) {
-      
       if (event.target.tagName === "INPUT" || event.target.tagName === "TEXTAREA") {
           return; 
       }
@@ -287,8 +272,6 @@ footer {
       }
   });
 
-  const mobileBtn = document.getElementById("mobileThemeBtn");
-
   mobileBtn.addEventListener("click", function() {
       const body = document.body;
       body.classList.toggle("dark-mode");
@@ -299,7 +282,6 @@ footer {
           localStorage.setItem("darkMode", "disabled");
       }
   });
- 
 </script>
 
 </body>
