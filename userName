@@ -170,12 +170,17 @@
     }
   }
 
-  #authBar {
+#authBar {
   position: fixed;
   top: 15px;
   right: 15px;
   z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100vw - 30px);
 }
+
 
 #loginBtn {
   padding: 8px 14px;
@@ -198,19 +203,33 @@
   }
 }
 
-  #userName {
-  margin-right: 10px;
+#userName {
   font-size: 14px;
   opacity: 0.85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
 }
 
 .dark-mode #userName {
   color: #ddd;
 }
 
-@media (max-width: 768px) {
+
+.dark-mode #userName {
+  color: #ddd;
+}
+
+@media (max-width: 480px) {
   #userName {
-    display: none;
+    max-width: 110px;
+    font-size: 13px;
+  }
+
+  #loginBtn {
+    padding: 6px 10px;
+    font-size: 13px;
   }
 }
 
