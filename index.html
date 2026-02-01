@@ -224,6 +224,24 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>  
 <script>
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAUhXixaP2h4VowCvW5zUnIcTlWrGAmC2A",
+  authDomain: "to-do-list-matteus-firebase.firebaseapp.com",
+  projectId: "to-do-list-matteus-firebase",
+  storageBucket: "to-do-list-matteus-firebase.firebasestorage.app",
+  messagingSenderId: "456570377153",
+  appId: "1:456570377153:web:84e7c1a0b14da52fb15540"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let currentUser = null;
+
+  
   const input = document.getElementById("taskInput");
   const btn = document.getElementById("addBtn");
   const list = document.getElementById("todo-list");
@@ -320,10 +338,7 @@ function loadTasks() {
 
   const loginBtn = document.getElementById("loginBtn");
 
-loginBtn.onclick = () => {
-  const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider);
-};
+
 
 auth.onAuthStateChanged(user => {
   if (user) {
@@ -338,7 +353,12 @@ auth.onAuthStateChanged(user => {
 });
 
 loginBtn.addEventListener("click", () => {
-  if (currentUser) auth.signOut();
+  if (currentUser) {
+    auth.signOut();
+  } else {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider);
+  }
 });
 
 </script>
