@@ -198,10 +198,28 @@
   }
 }
 
+  #userName {
+  margin-right: 10px;
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.dark-mode #userName {
+  color: #ddd;
+}
+
+@media (max-width: 768px) {
+  #userName {
+    display: none;
+  }
+}
+
+
 </style>
 </head>
 <body>
 <div id="authBar">
+  <span id="userName"></span>
   <button id="loginBtn">Log in</button>
 </div>
 
@@ -337,20 +355,24 @@ function loadTasks() {
   });
 
   const loginBtn = document.getElementById("loginBtn");
+  const userName = document.getElementById("userName");
 
 
 
 auth.onAuthStateChanged(user => {
   if (user) {
     currentUser = user;
+    userName.innerText = user.displayName;
     loginBtn.innerText = "Log out";
     loadTasks();
   } else {
     currentUser = null;
+    userName.innerText = "";
     list.innerHTML = "";
     loginBtn.innerText = "Log in";
   }
 });
+
 
 loginBtn.addEventListener("click", () => {
   if (currentUser) {
