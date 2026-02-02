@@ -3,9 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Notes</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗒️</text></svg>">
-
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+<title>To-do List</title>
 <style>
   body { 
     font-family: sans-serif; 
@@ -13,10 +12,6 @@
     justify-content: center; 
     padding-top: 50px; 
     transition: background-color 0.3s ease, color 0.3s ease;
-    margin: 0;
-    min-height: 100vh;
-    background-color: white;
-    color: black;
   }
   
   .dark-mode {
@@ -24,83 +19,16 @@
     color: white;
   }
 
-  /* Input Styling */
-  .input-container {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    align-items: flex-start;
-  }
-
-  textarea { 
-    padding: 10px; 
-    width: 300px; 
-    height: 60px; /* Taller than the to-do input for multi-line notes */
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    outline: none; 
-    resize: vertical;
-    font-family: sans-serif;
-  }
-
-  .dark-mode textarea {
+  .dark-mode input {
     background-color: #333;
     color: white;
     border: 1px solid #555;
   }
   
-  /* Buttons */
-  button { 
-    padding: 10px; 
-    cursor: pointer; 
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: #eee;
-    transition: 0.2s;
-  }
-
-  button:hover {
-    background-color: #ddd;
-  }
-
   .dark-mode button {
     background-color: #444;
     color: white;
     border: 1px solid #555;
-  }
-  .dark-mode button:hover {
-    background-color: #555;
-  }
-
-  #addBtn {
-    height: 82px; /* Matches textarea height + padding */
-    width: 50px;
-    font-size: 24px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  /* List Styling */
-  #notes-list {
-    margin-top: 20px;
-    padding: 0;
-    padding-bottom: 100px; 
-    list-style: none;
-    width: 380px; /* Slightly wider than To-Do for readability */
-  }
-
-  li {
-    background: #f4f4f4;
-    border-bottom: 1px solid #ddd;
-    padding: 15px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    transition: 0.2s;
-    position: relative;
-    white-space: pre-wrap; /* Preserves line breaks in notes */
-    word-wrap: break-word;
   }
 
   .dark-mode li {
@@ -109,52 +37,59 @@
     border-bottom: 1px solid #444;
   }
   
-  /* Delete Button on Note */
-  .delete-btn {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    background: transparent;
-    border: none;
-    color: #999;
-    font-size: 12px;
-    padding: 5px;
-    height: auto;
-    width: auto;
+  .dark-mode li:hover {
+    background-color: #444;
+  }
+
+  #todo-list {
+    margin-top: 20px;
+    padding: 0;
+    padding-bottom: 100px; 
+    list-style: none;
+    width: 300px;
+  }
+
+  li {
+    background: #f4f4f4;
+    border-bottom: 1px solid #ddd;
+    padding: 10px;
+    cursor: pointer;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    transition: 0.2s;
+    user-select: none; 
   }
   
-  .delete-btn:hover {
-    color: red;
-    background: rgba(255,0,0,0.1);
+  li:hover { background-color: #e0e0e0; }
+
+  .done {
+    text-decoration: line-through;
+    color: gray;
+    opacity: 0.6;
   }
 
-  /* Auth Bar (Top Right) */
-  #authBar {
-    position: fixed;
-    top: 15px;
-    right: 15px;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+  .fall-away {
+    opacity: 0;
+    transform: translateX(50px);
+    transition: all 0.5s ease;
   }
 
-  #loginBtn {
-    padding: 8px 14px;
-    height: auto;
-    font-size: 14px;
+  input { 
+    padding: 10px; 
+    width: 200px; 
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    outline: none; 
+  }
+  
+  button { 
+    padding: 10px; 
+    cursor: pointer; 
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #eee;
   }
 
-  #userName {
-    font-size: 14px;
-    opacity: 0.85;
-  }
-
-  .dark-mode #userName {
-    color: #ddd;
-  }
-
-  /* Footer */
   footer {
     position: fixed;
     bottom: 0;
@@ -174,52 +109,166 @@
     color: #aaa; 
   }
 
-  #mobileThemeBtn {
-    display: none;
+  .footer-links {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
   }
 
-  @media (max-width: 600px) {
-    textarea { width: 60vw; }
-    #notes-list { width: 90vw; }
-    #mobileThemeBtn { display: inline-block; margin-left: 10px; height: auto;}
+  .footer-links a {
+    text-decoration: none;
+    color: #333;
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #eee;
+    font-size: 12px;
+    transition: all 0.3s ease;
   }
+
+  .footer-links a:hover {
+    background-color: #ddd;
+  }
+
+  .dark-mode .footer-links a {
+    background-color: #444;
+    color: white;
+    border-color: #555;
+  }
+
+  .dark-mode .footer-links a:hover {
+    background-color: #555;
+  }
+
+  #mobileThemeBtn {
+    display: none;
+    margin-left: 5px;
+  }
+
+  @media (max-width: 768px) {
+    #todo-list {
+      width: 90vw;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    input {
+      width: 50%; 
+    }
+
+    #mobileThemeBtn {
+      display: inline-block;
+    }
+
+    p {
+      display: none;
+    }
+    
+    footer {
+      font-size: 12px;
+    }
+  }
+
+#authBar {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100vw - 30px);
+}
+
+
+#loginBtn {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #eee;
+  cursor: pointer;
+}
+
+.dark-mode #loginBtn {
+  background: #444;
+  color: white;
+  border-color: #555;
+}
+
+@media (max-width: 768px) {
+  #authBar {
+    top: 10px;
+    right: 10px;
+  }
+}
+
+#userName {
+  font-size: 14px;
+  opacity: 0.85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+.dark-mode #userName {
+  color: #ddd;
+}
+
+
+.dark-mode #userName {
+  color: #ddd;
+}
+
+@media (max-width: 480px) {
+  #userName {
+    max-width: 110px;
+    font-size: 13px;
+  }
+
+  #loginBtn {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+}
+
+
 </style>
 </head>
 <body>
-
 <div id="authBar">
   <span id="userName"></span>
   <button id="loginBtn">Log in</button>
 </div>
 
 <div>
-  <div class="input-container">
-    <textarea id="noteInput" placeholder="Write a note..."></textarea>
-    <button id="addBtn">+</button>
-    <button id="mobileThemeBtn">🌓</button>
-  </div>
+  <input id="taskInput" type="text" placeholder="New Task...">
+  <button id="addBtn">Add</button>
+  <button id="mobileThemeBtn">🌓</button>
   
-  <ul id="notes-list"></ul>
+  <ul id="todo-list"></ul>
+ 
 </div>
 
 <footer>
   <p>Created by Matteus Aydin 2026</p>
   <p style="font-size: 12px; opacity: 0.8; margin-top: 5px;">Press 'M' to toggle theme</p>
+  </div>
 </footer>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>  
-
 <script>
-// --- CONFIGURATION FROM YOUR NOTES APP ---
+
 const firebaseConfig = {
-    apiKey: "AIzaSyAJYwEuF27rNMANqpE49PnLoRJPJlzFGBc",
-    authDomain: "notes-matteus--firebase.firebaseapp.com",
-    projectId: "notes-matteus--firebase",
-    storageBucket: "notes-matteus--firebase.firebasestorage.app",
-    messagingSenderId: "601405793462",
-    appId: "1:601405793462:web:39d554bd7e7fb0e41df217"
+  apiKey: "AIzaSyAUhXixaP2h4VowCvW5zUnIcTlWrGAmC2A",
+  authDomain: "to-do-list-matteus-firebase.firebaseapp.com",
+  projectId: "to-do-list-matteus-firebase",
+  storageBucket: "to-do-list-matteus-firebase.firebasestorage.app",
+  messagingSenderId: "456570377153",
+  appId: "1:456570377153:web:84e7c1a0b14da52fb15540"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -229,109 +278,131 @@ const db = firebase.firestore();
 
 let currentUser = null;
 
-const input = document.getElementById("noteInput");
-const btn = document.getElementById("addBtn");
-const list = document.getElementById("notes-list");
-const mobileBtn = document.getElementById("mobileThemeBtn");
-const loginBtn = document.getElementById("loginBtn");
-const userName = document.getElementById("userName");
+  
+  const input = document.getElementById("taskInput");
+  const btn = document.getElementById("addBtn");
+  const list = document.getElementById("todo-list");
+  const mobileBtn = document.getElementById("mobileThemeBtn");
 
-// --- THEME LOGIC (Identical to To-Do) ---
-if (localStorage.getItem("darkMode") === "enabled") {
-    document.body.classList.add("dark-mode");
-}
+ 
 
-document.addEventListener("keydown", function(event) {
-    if (event.target.tagName === "INPUT" || event.target.tagName === "TEXTAREA") return;
-    if (event.key === "m" || event.key === "M") toggleTheme();
-});
+  if (localStorage.getItem("darkMode") === "enabled") {
+      document.body.classList.add("dark-mode");
+  }
 
-mobileBtn.addEventListener("click", toggleTheme);
+  input.addEventListener("keydown", function(event) {
+      if (event.key === "Enter") {
+          btn.click(); 
+      }
+  });
 
-function toggleTheme() {
-    const body = document.body;
-    body.classList.toggle("dark-mode");
-    localStorage.setItem("darkMode", body.classList.contains("dark-mode") ? "enabled" : "disabled");
-}
-
-// --- APP LOGIC ---
-
-// 1. Add Note
 btn.addEventListener("click", function() {
-    if (!currentUser) {
-        alert("Please log in to save notes!");
-        return;
-    }
-    const text = input.value;
-    if (text.trim() === "") return;
+  if (!currentUser) return;
+  const text = input.value;
+  if (text === "") return;
 
-    db.collection("notes") // Using a generic collection or user-specific subcollection
-      .add({
-          uid: currentUser.uid, // Save UID so we can query only this user's notes
-          text: text,
-          time: Date.now()
-      });
+  db.collection("users")
+    .doc(currentUser.uid)
+    .collection("todos")
+    .add({ text });
 
-    input.value = "";
+  input.value = "";
 });
 
-// 2. Render Note
 function createItem(text, id) {
-    const newItem = document.createElement("li");
-    newItem.innerText = text;
+  const newItem = document.createElement("li");
+  newItem.innerText = text;
 
-    // Delete Button (Safety feature for notes)
-    const delBtn = document.createElement("button");
-    delBtn.innerText = "✕";
-    delBtn.className = "delete-btn";
-    delBtn.onclick = function() {
-        if(confirm("Delete this note?")) {
-            db.collection("notes").doc(id).delete();
-        }
-    };
+  newItem.addEventListener("click", function() {
+    newItem.classList.add("done");
+    setTimeout(() => {
+      newItem.classList.add("fall-away");
+    }, 200);
+    setTimeout(() => {
+      db.collection("users")
+        .doc(currentUser.uid)
+        .collection("todos")
+        .doc(id)
+        .delete();
+    }, 700);
+  });
 
-    newItem.appendChild(delBtn);
-    list.appendChild(newItem);
+  list.appendChild(newItem);
 }
 
-// 3. Load Notes
-function loadNotes() {
-    list.innerHTML = "";
-    db.collection("notes")
-      .where("uid", "==", currentUser.uid) // Only get current user's notes
-      .orderBy("time", "desc") // Newest first
-      .onSnapshot(snapshot => {
-          list.innerHTML = "";
-          snapshot.forEach(doc => {
-              createItem(doc.data().text, doc.id);
-          });
+
+function loadTasks() {
+  list.innerHTML = "";
+  db.collection("users")
+    .doc(currentUser.uid)
+    .collection("todos")
+    .onSnapshot(snapshot => {
+      list.innerHTML = "";
+      snapshot.forEach(doc => {
+        createItem(doc.data().text, doc.id);
       });
+    });
 }
 
-// --- AUTHENTICATION ---
+
+  document.addEventListener("keydown", function(event) {
+      if (event.target.tagName === "INPUT" || event.target.tagName === "TEXTAREA") {
+          return; 
+      }
+
+      if (event.key === "m" || event.key === "M") {
+          const body = document.body;
+          body.classList.toggle("dark-mode");
+          
+          if (body.classList.contains("dark-mode")) {
+              localStorage.setItem("darkMode", "enabled");
+          } else {
+              localStorage.setItem("darkMode", "disabled");
+          }
+      }
+  });
+
+  mobileBtn.addEventListener("click", function() {
+      const body = document.body;
+      body.classList.toggle("dark-mode");
+      
+      if (body.classList.contains("dark-mode")) {
+          localStorage.setItem("darkMode", "enabled");
+      } else {
+          localStorage.setItem("darkMode", "disabled");
+      }
+  });
+
+  const loginBtn = document.getElementById("loginBtn");
+  const userName = document.getElementById("userName");
+
+
+
 auth.onAuthStateChanged(user => {
-    if (user) {
-        currentUser = user;
-        userName.innerText = user.displayName;
-        loginBtn.innerText = "Log out";
-        loadNotes();
-    } else {
-        currentUser = null;
-        userName.innerText = "";
-        list.innerHTML = "";
-        loginBtn.innerText = "Log in";
-    }
+  if (user) {
+    currentUser = user;
+    userName.innerText = user.displayName;
+    loginBtn.innerText = "Log out";
+    loadTasks();
+  } else {
+    currentUser = null;
+    userName.innerText = "";
+    list.innerHTML = "";
+    loginBtn.innerText = "Log in";
+  }
 });
+
 
 loginBtn.addEventListener("click", () => {
-    if (currentUser) {
-        auth.signOut();
-    } else {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        auth.signInWithPopup(provider); // Using Popup instead of Redirect for smoother experience
-    }
+  if (currentUser) {
+    auth.signOut();
+  } else {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider);
+  }
 });
 
 </script>
+
 </body>
 </html>
