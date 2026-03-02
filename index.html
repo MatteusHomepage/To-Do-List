@@ -191,11 +191,26 @@
   cursor: pointer;
 }
 
+
+#hubBtn {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #eee;
+  cursor: pointer;
+} 
+
 .dark-mode #loginBtn {
   background: #444;
   color: white;
   border-color: #555;
 }
+
+.dark-mode #hubBtn {
+  background: #444;
+  color: white;
+  border-color: #555;
+} 
 
 @media (max-width: 768px) {
   #authBar {
@@ -232,6 +247,12 @@
     padding: 6px 10px;
     font-size: 13px;
   }
+
+#hubBtn {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+ 
 }
 
 
@@ -241,6 +262,7 @@
 <div id="authBar">
   <span id="userName"></span>
   <button id="loginBtn">Log in</button>
+  <button id="hubBtn" onclick="window.location.href='https://matteushomepage.github.io/Website-Hub'" >To Hub</button>
 </div>
 
 <div>
