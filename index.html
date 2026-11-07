@@ -19,6 +19,7 @@
     --button: #ededeb;
     --shadow: 0 2px 0 #e1e1df, 0 5px 16px #00000008;
     --focus: #777777;
+    --success: #548b62;
 }
 
 * {
@@ -47,6 +48,7 @@ body.dark-mode {
     --button: #343434;
     --shadow: 0 2px 0 #181818, 0 5px 16px #00000022;
     --focus: #aaaaaa;
+    --success: #83b58d;
 }
 
 main {
@@ -140,7 +142,7 @@ button:disabled {
 #tasks-list {
     display: flex;
     flex-direction: column;
-    gap: 11px;
+    gap: 0;
     width: 100%;
     margin: 0;
     padding: 0 0 80px;
@@ -149,12 +151,25 @@ button:disabled {
 
 .task-card {
     overflow: hidden;
-    transition: opacity 0.2s, transform 0.2s;
+    max-height: 150px;
+    margin-bottom: 11px;
+    opacity: 1;
+    transform: translateX(0);
+    transition:
+        opacity 0.35s ease,
+        transform 0.35s ease,
+        max-height 0.4s ease,
+        margin-bottom 0.4s ease,
+        border-width 0.4s ease;
 }
 
 .task-card.completing {
+    max-height: 0;
+    margin-bottom: 0;
+    border-width: 0;
     opacity: 0;
-    transform: translateX(25px);
+    transform: translateX(35px);
+    pointer-events: none;
 }
 
 .task-button {
@@ -187,11 +202,27 @@ button:disabled {
     border-radius: 5px;
     color: transparent;
     font-size: 13px;
-    transition: background 0.2s, color 0.2s;
+    transition:
+        background 0.2s,
+        color 0.2s,
+        border-color 0.2s,
+        transform 0.25s;
 }
 
 .task-button:hover .task-check {
     border-color: var(--text);
+}
+
+.task-card.completing .task-check {
+    border-color: var(--success);
+    background: var(--success);
+    color: white;
+    transform: scale(1.12);
+}
+
+.task-card.completing .task-text {
+    text-decoration: line-through;
+    opacity: 0.55;
 }
 
 .task-button:focus-visible {
@@ -342,6 +373,22 @@ footer {
     font-weight: 600;
 }
 
+#switchAuthMode {
+    display: block;
+    width: 100%;
+    margin-top: 13px;
+    padding: 5px;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+#switchAuthMode:hover {
+    color: var(--text);
+    text-decoration: underline;
+}
+
 #loginStatus {
     margin-top: 12px;
     color: #c0392b;
@@ -421,6 +468,13 @@ footer {
         font-size: 11px;
     }
 }
+
+@media (prefers-reduced-motion: reduce) {
+    .task-card,
+    .task-check {
+        transition-duration: 0.01ms;
+    }
+}
 </style>
 </head>
 
@@ -464,8 +518,10 @@ footer {
         <form id="loginForm">
             <input type="email" id="emailInput" placeholder="Email address" autocomplete="email" required>
             <input type="password" id="passwordInput" placeholder="Password" autocomplete="current-password" minlength="6" required>
-            <button type="submit" id="loginSubmit">Continue</button>
+            <button type="submit" id="loginSubmit">Log in</button>
         </form>
+
+        <button id="switchAuthMode" type="button">Create an account</button>
 
         <div id="loginStatus" role="status" aria-live="polite"></div>
     </div>
@@ -503,7 +559,10 @@ const elements = {
     email: document.getElementById("emailInput"),
     password: document.getElementById("passwordInput"),
     loginSubmit: document.getElementById("loginSubmit"),
-    loginStatus: document.getElementById("loginStatus")
+    loginStatus: document.getElementById("loginStatus"),
+    heading: document.getElementById("loginHeading"),
+    description: document.getElementById("loginDescription"),
+    switchMode: document.getElementById("switchAuthMode")
 };
 
 const PENDING_EMAIL_KEY = "todoPendingEmail";
@@ -513,6 +572,7 @@ let tasksListener = null;
 let tasks = [];
 let passwordSetupUser = null;
 let completingEmailLink = false;
+let authMode = "login";
 
 if (localStorage.getItem("darkMode") === "enabled") {
     document.body.classList.add("dark-mode");
@@ -542,14 +602,43 @@ document.addEventListener("keydown", event => {
     }
 });
 
+function showLoginStatus(message, success = false) {
+    elements.loginStatus.textContent = message;
+    elements.loginStatus.style.color = success ? "#39804a" : "#c0392b";
+}
+
+function setLoginBusy(busy, message = "Please wait...") {
+    elements.loginSubmit.disabled = busy;
+    elements.loginSubmit.textContent = busy ? message : (
+        passwordSetupUser ? "Set password" :
+        authMode === "signup" ? "Create account" : "Log in"
+    );
+}
+
+function setAuthMode(mode) {
+    authMode = mode;
+    elements.loginStatus.textContent = "";
+
+    if (mode === "signup") {
+        elements.heading.textContent = "Create an account";
+        elements.description.textContent = "Verify your email before creating your account.";
+        elements.loginSubmit.textContent = "Create account";
+        elements.switchMode.textContent = "Already have an account? Log in";
+        elements.password.autocomplete = "new-password";
+    } else {
+        elements.heading.textContent = "Log in";
+        elements.description.textContent = "Use your email and password.";
+        elements.loginSubmit.textContent = "Log in";
+        elements.switchMode.textContent = "Create an account";
+        elements.password.autocomplete = "current-password";
+    }
+}
+
 function openLoginModal() {
     elements.modal.classList.add("visible");
-    elements.loginStatus.textContent = "";
-    elements.loginHeading.textContent = "Log in";
-    elements.loginDescription.textContent = "Use your email and password.";
-    elements.loginSubmit.textContent = "Continue";
+    elements.loginForm.reset();
+    setAuthMode("login");
     elements.email.readOnly = false;
-    elements.password.autocomplete = "current-password";
     elements.email.focus();
 }
 
@@ -564,6 +653,23 @@ function closeLoginModal() {
     elements.email.readOnly = false;
 }
 
+document.getElementById("closeLogin").addEventListener("click", closeLoginModal);
+
+elements.modal.addEventListener("click", event => {
+    if (event.target === elements.modal) {
+        closeLoginModal();
+    }
+});
+
+elements.switchMode.addEventListener("click", () => {
+    if (passwordSetupUser) {
+        return;
+    }
+
+    elements.password.value = "";
+    setAuthMode(authMode === "login" ? "signup" : "login");
+});
+
 elements.loginButton.addEventListener("click", () => {
     if (currentUser) {
         auth.signOut().catch(error => {
@@ -574,37 +680,23 @@ elements.loginButton.addEventListener("click", () => {
     }
 });
 
-document.getElementById("closeLogin").addEventListener("click", closeLoginModal);
-
-elements.modal.addEventListener("click", event => {
-    if (event.target === elements.modal) {
-        closeLoginModal();
-    }
-});
-
-function showLoginStatus(message, success = false) {
-    elements.loginStatus.textContent = message;
-    elements.loginStatus.style.color = success ? "#39804a" : "#c0392b";
-}
-
 function getAuthErrorMessage(error) {
     const messages = {
         "auth/invalid-email": "Enter a valid email address.",
         "auth/weak-password": "Use a password with at least 6 characters.",
         "auth/too-many-requests": "Too many attempts. Please try again later.",
         "auth/network-request-failed": "Network error. Check your connection and try again.",
-        "auth/operation-not-allowed": "Email/password and email-link sign-in must be enabled in Firebase Authentication.",
+        "auth/operation-not-allowed": "Enable Email/Password and Email link sign-in in Firebase Authentication.",
         "auth/expired-action-code": "This email link has expired. Please request a new one.",
-        "auth/invalid-action-code": "This email link is invalid or has already been used. Please request a new one.",
-        "auth/credential-already-in-use": "This email already has a password account. Try logging in again."
+        "auth/invalid-action-code": "This email link is invalid or has already been used.",
+        "auth/email-already-in-use": "An account with this email already exists. Please log in.",
+        "auth/wrong-password": "Incorrect email or password.",
+        "auth/invalid-credential": "Incorrect email or password.",
+        "auth/user-not-found": "No account exists with this email. Create an account first.",
+        "auth/credential-already-in-use": "This email already has an account. Please log in."
     };
 
     return messages[error.code] || error.message || "Something went wrong.";
-}
-
-function setLoginBusy(busy, message = "Continue") {
-    elements.loginSubmit.disabled = busy;
-    elements.loginSubmit.textContent = busy ? message : "Continue";
 }
 
 function getContinueUrl() {
@@ -614,7 +706,7 @@ function getContinueUrl() {
     return url.toString();
 }
 
-async function sendSignInLink(email) {
+async function sendVerificationLink(email) {
     const actionCodeSettings = {
         url: getContinueUrl(),
         handleCodeInApp: true
@@ -625,36 +717,33 @@ async function sendSignInLink(email) {
     localStorage.setItem(PENDING_EMAIL_KEY, email);
 
     showLoginStatus(
-        "Check your inbox for the sign-in link. If it isn't there, check your spam or junk folder.",
+        "Verification link sent. Check your inbox and spam or junk folder. Your account will only be created after you click the link.",
         true
     );
 }
 
-async function signInOrStartRegistration(email, password) {
-    try {
-        const result = await auth.signInWithEmailAndPassword(email, password);
+async function createAccount(email) {
+    await sendVerificationLink(email);
+}
 
-        if (result.user.emailVerified) {
-            closeLoginModal();
-            return;
-        }
+async function login(email, password) {
+    const result = await auth.signInWithEmailAndPassword(email, password);
+
+    if (!result.user.emailVerified) {
+        await result.user.sendEmailVerification({
+            url: getContinueUrl()
+        });
 
         await auth.signOut();
-        await sendSignInLink(email);
-    } catch (error) {
-        const fallbackCodes = [
-            "auth/user-not-found",
-            "auth/invalid-credential",
-            "auth/wrong-password"
-        ];
 
-        if (fallbackCodes.includes(error.code)) {
-            await sendSignInLink(email);
-            return;
-        }
+        showLoginStatus(
+            "Your email has not been verified. A verification email has been sent. Check your inbox and spam or junk folder."
+        );
 
-        throw error;
+        return;
     }
+
+    closeLoginModal();
 }
 
 elements.loginForm.addEventListener("submit", async event => {
@@ -664,7 +753,7 @@ elements.loginForm.addEventListener("submit", async event => {
     const password = elements.password.value;
 
     if (!email || password.length < 6) {
-        showLoginStatus("Enter your email and a password with at least 6 characters.");
+        showLoginStatus("Enter a valid email and a password with at least 6 characters.");
         return;
     }
 
@@ -674,10 +763,14 @@ elements.loginForm.addEventListener("submit", async event => {
     }
 
     showLoginStatus("");
-    setLoginBusy(true, "Please wait...");
+    setLoginBusy(true);
 
     try {
-        await signInOrStartRegistration(email, password);
+        if (authMode === "signup") {
+            await createAccount(email);
+        } else {
+            await login(email, password);
+        }
     } catch (error) {
         showLoginStatus(getAuthErrorMessage(error));
     } finally {
@@ -686,24 +779,24 @@ elements.loginForm.addEventListener("submit", async event => {
 });
 
 async function finishPasswordSetup(email, password) {
-    if (password.length < 6) {
-        showLoginStatus("Use a password with at least 6 characters.");
-        return;
-    }
-
     setLoginBusy(true, "Setting password...");
 
     try {
         const credential = firebase.auth.EmailAuthProvider.credential(email, password);
 
         await passwordSetupUser.linkWithCredential(credential);
+        await passwordSetupUser.reload();
 
         passwordSetupUser = null;
         completingEmailLink = false;
+
         finishEmailLinkCleanup();
+
         elements.modal.classList.remove("visible");
         elements.loginForm.reset();
         elements.email.readOnly = false;
+
+        activateUser(auth.currentUser);
     } catch (error) {
         showLoginStatus(getAuthErrorMessage(error));
     } finally {
@@ -747,30 +840,79 @@ async function completeEmailLink() {
             provider => provider.providerId === "password"
         );
 
-        if (!hasPasswordProvider) {
-            passwordSetupUser = result.user;
+        if (hasPasswordProvider) {
+            await auth.signOut();
 
-            elements.modal.classList.add("visible");
-            elements.loginHeading.textContent = "Set your password";
-            elements.loginDescription.textContent = "Choose a password for future logins.";
-            elements.email.value = email;
-            elements.email.readOnly = true;
-            elements.password.value = "";
-            elements.password.autocomplete = "new-password";
-            elements.loginSubmit.textContent = "Set password";
-
-            showLoginStatus("Your email is verified. Set a password to finish.", true);
             completingEmailLink = false;
+            finishEmailLinkCleanup();
+            openLoginModal();
+
+            showLoginStatus(
+                "This email already has an account. Log in using your password."
+            );
+
             return;
         }
 
-        finishEmailLinkCleanup();
+        passwordSetupUser = result.user;
+
+        elements.modal.classList.add("visible");
+        elements.loginForm.reset();
+
+        elements.heading.textContent = "Set your password";
+        elements.description.textContent = "Your email is verified. Choose a password.";
+        elements.email.value = email;
+        elements.email.readOnly = true;
+        elements.password.autocomplete = "new-password";
+        elements.loginSubmit.textContent = "Set password";
+        elements.switchMode.style.display = "none";
+
+        showLoginStatus(
+            "Email verified. Your account has now been created. Set your password to finish.",
+            true
+        );
+
         completingEmailLink = false;
-        elements.modal.classList.remove("visible");
     } catch (error) {
         completingEmailLink = false;
+        finishEmailLinkCleanup();
         openLoginModal();
         showLoginStatus(getAuthErrorMessage(error));
+    }
+}
+
+function activateUser(user) {
+    if (!user || !user.emailVerified) {
+        return;
+    }
+
+    const hasPasswordProvider = user.providerData.some(
+        provider => provider.providerId === "password"
+    );
+
+    if (!hasPasswordProvider) {
+        return;
+    }
+
+    currentUser = user;
+    elements.userName.textContent = user.email || "";
+    elements.loginButton.textContent = "Log out";
+
+    loadTasks();
+}
+
+function deactivateUser() {
+    currentUser = null;
+
+    elements.userName.textContent = "";
+    elements.loginButton.textContent = "Log in";
+    elements.taskList.innerHTML = "";
+
+    tasks = [];
+
+    if (tasksListener) {
+        tasksListener();
+        tasksListener = null;
     }
 }
 
@@ -837,18 +979,25 @@ function renderTasks() {
         check.textContent = "✓";
 
         const text = document.createElement("span");
+        text.className = "task-text";
         text.textContent = task.task;
 
         button.append(check, text);
         item.appendChild(button);
 
         button.addEventListener("click", async () => {
-            if (button.disabled) {
+            if (button.disabled || !currentUser) {
                 return;
             }
 
             button.disabled = true;
             item.classList.add("completing");
+
+            const animationDuration = 450;
+
+            await new Promise(resolve => {
+                setTimeout(resolve, animationDuration);
+            });
 
             try {
                 await db.collection("users")
@@ -859,6 +1008,7 @@ function renderTasks() {
             } catch (error) {
                 item.classList.remove("completing");
                 button.disabled = false;
+
                 alert("Could not complete task: " + error.message);
             }
         });
@@ -904,28 +1054,24 @@ function loadTasks() {
 }
 
 auth.onAuthStateChanged(user => {
-    if (user && user.emailVerified) {
-        currentUser = user;
-        elements.userName.textContent = user.email || "";
-        elements.loginButton.textContent = "Log out";
-        loadTasks();
+    if (
+        user &&
+        user.emailVerified &&
+        user.providerData.some(provider => provider.providerId === "password")
+    ) {
+        activateUser(user);
         return;
     }
 
-    if (user && !user.emailVerified) {
+    if (user && completingEmailLink) {
+        return;
+    }
+
+    if (user && !passwordSetupUser) {
         auth.signOut().catch(console.error);
     }
 
-    currentUser = null;
-    elements.userName.textContent = "";
-    elements.loginButton.textContent = "Log in";
-    elements.taskList.innerHTML = "";
-    tasks = [];
-
-    if (tasksListener) {
-        tasksListener();
-        tasksListener = null;
-    }
+    deactivateUser();
 });
 
 completeEmailLink().catch(error => {
