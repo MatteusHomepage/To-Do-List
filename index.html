@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -373,22 +374,6 @@ footer {
     font-weight: 600;
 }
 
-#switchAuthMode {
-    display: block;
-    width: 100%;
-    margin-top: 13px;
-    padding: 5px;
-    border: 0;
-    background: transparent;
-    color: var(--muted);
-    font-size: 13px;
-}
-
-#switchAuthMode:hover {
-    color: var(--text);
-    text-decoration: underline;
-}
-
 #loginStatus {
     margin-top: 12px;
     color: #c0392b;
@@ -513,15 +498,13 @@ footer {
     <div id="loginBox">
         <button id="closeLogin" type="button" aria-label="Close login">×</button>
         <h2 id="loginHeading">Log in</h2>
-        <p id="loginDescription">Use your email and password.</p>
+        <p id="loginDescription">Enter your email and password.</p>
 
         <form id="loginForm">
             <input type="email" id="emailInput" placeholder="Email address" autocomplete="email" required>
             <input type="password" id="passwordInput" placeholder="Password" autocomplete="current-password" minlength="6" required>
             <button type="submit" id="loginSubmit">Log in</button>
         </form>
-
-        <button id="switchAuthMode" type="button">Create an account</button>
 
         <div id="loginStatus" role="status" aria-live="polite"></div>
     </div>
@@ -561,18 +544,17 @@ const elements = {
     loginSubmit: document.getElementById("loginSubmit"),
     loginStatus: document.getElementById("loginStatus"),
     heading: document.getElementById("loginHeading"),
-    description: document.getElementById("loginDescription"),
-    switchMode: document.getElementById("switchAuthMode")
+    description: document.getElementById("loginDescription")
 };
 
 const PENDING_EMAIL_KEY = "todoPendingEmail";
+const PENDING_PASSWORD_KEY = "todoPendingPassword";
 
 let currentUser = null;
 let tasksListener = null;
 let tasks = [];
 let passwordSetupUser = null;
 let completingEmailLink = false;
-let authMode = "login";
 
 if (localStorage.getItem("darkMode") === "enabled") {
     document.body.classList.add("dark-mode");
@@ -610,35 +592,19 @@ function showLoginStatus(message, success = false) {
 function setLoginBusy(busy, message = "Please wait...") {
     elements.loginSubmit.disabled = busy;
     elements.loginSubmit.textContent = busy ? message : (
-        passwordSetupUser ? "Set password" :
-        authMode === "signup" ? "Create account" : "Log in"
+        passwordSetupUser ? "Finish account" : "Log in"
     );
-}
-
-function setAuthMode(mode) {
-    authMode = mode;
-    elements.loginStatus.textContent = "";
-
-    if (mode === "signup") {
-        elements.heading.textContent = "Create an account";
-        elements.description.textContent = "Verify your email before creating your account.";
-        elements.loginSubmit.textContent = "Create account";
-        elements.switchMode.textContent = "Already have an account? Log in";
-        elements.password.autocomplete = "new-password";
-    } else {
-        elements.heading.textContent = "Log in";
-        elements.description.textContent = "Use your email and password.";
-        elements.loginSubmit.textContent = "Log in";
-        elements.switchMode.textContent = "Create an account";
-        elements.password.autocomplete = "current-password";
-    }
 }
 
 function openLoginModal() {
     elements.modal.classList.add("visible");
     elements.loginForm.reset();
-    setAuthMode("login");
     elements.email.readOnly = false;
+    elements.password.autocomplete = "current-password";
+    elements.heading.textContent = "Log in";
+    elements.description.textContent = "Enter your email and password.";
+    elements.loginSubmit.textContent = "Log in";
+    elements.loginSubmit.disabled = false;
     elements.email.focus();
 }
 
@@ -651,6 +617,7 @@ function closeLoginModal() {
     elements.loginStatus.textContent = "";
     elements.loginForm.reset();
     elements.email.readOnly = false;
+    elements.password.autocomplete = "current-password";
 }
 
 document.getElementById("closeLogin").addEventListener("click", closeLoginModal);
@@ -659,15 +626,6 @@ elements.modal.addEventListener("click", event => {
     if (event.target === elements.modal) {
         closeLoginModal();
     }
-});
-
-elements.switchMode.addEventListener("click", () => {
-    if (passwordSetupUser) {
-        return;
-    }
-
-    elements.password.value = "";
-    setAuthMode(authMode === "login" ? "signup" : "login");
 });
 
 elements.loginButton.addEventListener("click", () => {
@@ -687,13 +645,12 @@ function getAuthErrorMessage(error) {
         "auth/too-many-requests": "Too many attempts. Please try again later.",
         "auth/network-request-failed": "Network error. Check your connection and try again.",
         "auth/operation-not-allowed": "Enable Email/Password and Email link sign-in in Firebase Authentication.",
-        "auth/expired-action-code": "This email link has expired. Please request a new one.",
+        "auth/expired-action-code": "This email link has expired. Please start again.",
         "auth/invalid-action-code": "This email link is invalid or has already been used.",
-        "auth/email-already-in-use": "An account with this email already exists. Please log in.",
-        "auth/wrong-password": "Incorrect email or password.",
-        "auth/invalid-credential": "Incorrect email or password.",
-        "auth/user-not-found": "No account exists with this email. Create an account first.",
-        "auth/credential-already-in-use": "This email already has an account. Please log in."
+        "auth/email-already-in-use": "This email already has an account. Log in instead.",
+        "auth/wrong-password": "Wrong password.",
+        "auth/user-not-found": "This email is not registered.",
+        "auth/credential-already-in-use": "This email already has an account. Log in instead."
     };
 
     return messages[error.code] || error.message || "Something went wrong.";
@@ -706,44 +663,73 @@ function getContinueUrl() {
     return url.toString();
 }
 
-async function sendVerificationLink(email) {
+function clearPendingRegistration() {
+    sessionStorage.removeItem(PENDING_EMAIL_KEY);
+    sessionStorage.removeItem(PENDING_PASSWORD_KEY);
+}
+
+async function sendRegistrationLink(email, password) {
+    sessionStorage.setItem(PENDING_EMAIL_KEY, email);
+    sessionStorage.setItem(PENDING_PASSWORD_KEY, password);
+
     const actionCodeSettings = {
         url: getContinueUrl(),
         handleCodeInApp: true
     };
 
-    await auth.sendSignInLinkToEmail(email, actionCodeSettings);
-
-    localStorage.setItem(PENDING_EMAIL_KEY, email);
-
-    showLoginStatus(
-        "Verification link sent. Check your inbox and spam or junk folder. Your account will only be created after you click the link.",
-        true
-    );
-}
-
-async function createAccount(email) {
-    await sendVerificationLink(email);
-}
-
-async function login(email, password) {
-    const result = await auth.signInWithEmailAndPassword(email, password);
-
-    if (!result.user.emailVerified) {
-        await result.user.sendEmailVerification({
-            url: getContinueUrl()
-        });
-
-        await auth.signOut();
+    try {
+        await auth.sendSignInLinkToEmail(email, actionCodeSettings);
 
         showLoginStatus(
-            "Your email has not been verified. A verification email has been sent. Check your inbox and spam or junk folder."
+            "Verification link sent. Check your inbox and spam folder. Your account will only be created after you click the link.",
+            true
         );
+    } catch (error) {
+        clearPendingRegistration();
+        throw error;
+    }
+}
 
+async function loginOrRegister(email, password) {
+    const methods = await auth.fetchSignInMethodsForEmail(email);
+
+    if (methods.includes("password")) {
+        try {
+            const result = await auth.signInWithEmailAndPassword(email, password);
+
+            await result.user.reload();
+
+            if (!result.user.emailVerified) {
+                await auth.signOut();
+
+                showLoginStatus(
+                    "Your email is not verified. Please verify your email before logging in."
+                );
+
+                return;
+            }
+
+            closeLoginModal();
+            return;
+        } catch (error) {
+            if (
+                error.code === "auth/wrong-password" ||
+                error.code === "auth/invalid-credential"
+            ) {
+                showLoginStatus("Wrong password.");
+                return;
+            }
+
+            throw error;
+        }
+    }
+
+    if (methods.length > 0 && !methods.includes("emailLink")) {
+        showLoginStatus("This email uses a different sign-in method.");
         return;
     }
 
-    closeLoginModal();
+    await sendRegistrationLink(email, password);
 }
 
 elements.loginForm.addEventListener("submit", async event => {
@@ -752,13 +738,13 @@ elements.loginForm.addEventListener("submit", async event => {
     const email = elements.email.value.trim().toLowerCase();
     const password = elements.password.value;
 
-    if (!email || password.length < 6) {
-        showLoginStatus("Enter a valid email and a password with at least 6 characters.");
+    if (!email) {
+        showLoginStatus("Enter a valid email address.");
         return;
     }
 
-    if (passwordSetupUser) {
-        await finishPasswordSetup(email, password);
+    if (password.length < 6) {
+        showLoginStatus("Use a password with at least 6 characters.");
         return;
     }
 
@@ -766,10 +752,10 @@ elements.loginForm.addEventListener("submit", async event => {
     setLoginBusy(true);
 
     try {
-        if (authMode === "signup") {
-            await createAccount(email);
+        if (passwordSetupUser) {
+            await finishPasswordSetup(email, password);
         } else {
-            await login(email, password);
+            await loginOrRegister(email, password);
         }
     } catch (error) {
         showLoginStatus(getAuthErrorMessage(error));
@@ -779,18 +765,18 @@ elements.loginForm.addEventListener("submit", async event => {
 });
 
 async function finishPasswordSetup(email, password) {
-    setLoginBusy(true, "Setting password...");
+    setLoginBusy(true, "Finishing account...");
 
     try {
         const credential = firebase.auth.EmailAuthProvider.credential(email, password);
+        const result = await passwordSetupUser.linkWithCredential(credential);
 
-        await passwordSetupUser.linkWithCredential(credential);
-        await passwordSetupUser.reload();
+        await result.user.reload();
 
         passwordSetupUser = null;
         completingEmailLink = false;
-
-        finishEmailLinkCleanup();
+        clearPendingRegistration();
+        cleanEmailLinkUrl();
 
         elements.modal.classList.remove("visible");
         elements.loginForm.reset();
@@ -804,9 +790,7 @@ async function finishPasswordSetup(email, password) {
     }
 }
 
-function finishEmailLinkCleanup() {
-    localStorage.removeItem(PENDING_EMAIL_KEY);
-
+function cleanEmailLinkUrl() {
     const cleanUrl = window.location.origin + window.location.pathname;
     window.history.replaceState({}, document.title, cleanUrl);
 }
@@ -818,7 +802,8 @@ async function completeEmailLink() {
 
     completingEmailLink = true;
 
-    let email = localStorage.getItem(PENDING_EMAIL_KEY);
+    let email = sessionStorage.getItem(PENDING_EMAIL_KEY);
+    let password = sessionStorage.getItem(PENDING_PASSWORD_KEY);
 
     if (!email) {
         email = window.prompt("Enter the email address where you received the link:");
@@ -844,7 +829,8 @@ async function completeEmailLink() {
             await auth.signOut();
 
             completingEmailLink = false;
-            finishEmailLinkCleanup();
+            clearPendingRegistration();
+            cleanEmailLinkUrl();
             openLoginModal();
 
             showLoginStatus(
@@ -855,27 +841,33 @@ async function completeEmailLink() {
         }
 
         passwordSetupUser = result.user;
+        completingEmailLink = false;
+
+        cleanEmailLinkUrl();
+
+        if (password && password.length >= 6) {
+            await finishPasswordSetup(email, password);
+            return;
+        }
 
         elements.modal.classList.add("visible");
         elements.loginForm.reset();
 
-        elements.heading.textContent = "Set your password";
-        elements.description.textContent = "Your email is verified. Choose a password.";
+        elements.heading.textContent = "Log in";
+        elements.description.textContent = "Email verified. Enter the password you chose.";
         elements.email.value = email;
         elements.email.readOnly = true;
         elements.password.autocomplete = "new-password";
-        elements.loginSubmit.textContent = "Set password";
-        elements.switchMode.style.display = "none";
+        elements.loginSubmit.textContent = "Finish account";
+        elements.loginSubmit.disabled = false;
 
         showLoginStatus(
-            "Email verified. Your account has now been created. Set your password to finish.",
+            "Your email is verified. Enter the password you chose to finish creating your account.",
             true
         );
-
-        completingEmailLink = false;
     } catch (error) {
         completingEmailLink = false;
-        finishEmailLinkCleanup();
+        cleanEmailLinkUrl();
         openLoginModal();
         showLoginStatus(getAuthErrorMessage(error));
     }
@@ -993,7 +985,11 @@ function renderTasks() {
             button.disabled = true;
             item.classList.add("completing");
 
-            const animationDuration = 450;
+            const reduceMotion = window.matchMedia(
+                "(prefers-reduced-motion: reduce)"
+            ).matches;
+
+            const animationDuration = reduceMotion ? 20 : 450;
 
             await new Promise(resolve => {
                 setTimeout(resolve, animationDuration);
@@ -1054,6 +1050,10 @@ function loadTasks() {
 }
 
 auth.onAuthStateChanged(user => {
+    if (completingEmailLink || passwordSetupUser) {
+        return;
+    }
+
     if (
         user &&
         user.emailVerified &&
@@ -1063,11 +1063,7 @@ auth.onAuthStateChanged(user => {
         return;
     }
 
-    if (user && completingEmailLink) {
-        return;
-    }
-
-    if (user && !passwordSetupUser) {
+    if (user) {
         auth.signOut().catch(console.error);
     }
 
